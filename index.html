@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rideshare CEO — Ch. 11 Pricing Sim</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --uber: #1a1a2e;
+    --lyft: #E5007A;
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --border: #e2e2de;
+    --text: #1a1a1a;
+    --muted: #6b6b66;
+    --success-bg: #eaf5ee;
+    --success-text: #1a6633;
+    --success-border: #a3d4b0;
+    --danger-bg: #fcecea;
+    --danger-text: #991f1a;
+    --danger-border: #f0a8a3;
+    --info-bg: #eef3fb;
+    --info-text: #1a3a7a;
+    --info-border: #a8bff0;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── INTRO ── */
+  .intro-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .intro-title {
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--uber);
+    margin-bottom: 6px;
+  }
+  .intro-title span { color: var(--lyft); }
+  .intro-subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  .intro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .stat-box {
+    text-align: center;
+    padding: .875rem;
+    background: var(--bg);
+    border-radius: var(--radius);
+  }
+  .stat-n {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--uber);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .stat-l { font-size: 12px; color: var(--muted); }
+  .concept-header {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 10px;
+  }
+  .concept-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: .25rem; }
+  .ctag {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--info-bg);
+    color: var(--info-text);
+    border: 1px solid var(--info-border);
+  }
+  .intro-note {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── SETUP ── */
+  .setup-title {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .setup-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  .role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+  .role-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+    background: var(--surface);
+  }
+  .role-card:hover { border-color: #aaa; }
+  .role-card.picked-uber { border-color: var(--uber); background: #f0f0f7; }
+  .role-card.picked-lyft { border-color: var(--lyft); background: #fdf0f6; }
+  .role-logo {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .role-logo.uber { color: var(--uber); }
+  .role-logo.lyft { color: var(--lyft); }
+  .role-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ── GAME ── */
+  .scoreboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .co-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: .875rem 1.125rem;
+  }
+  .co-card.uber { border-top: 3px solid var(--uber); }
+  .co-card.lyft { border-top: 3px solid var(--lyft); }
+  .co-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  .co-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
+  .co-lbl { color: var(--muted); }
+  .co-val { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 13px; }
+
+  .progress-bar {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-bottom: 1.25rem;
+  }
+  .pip {
+    height: 5px;
+    flex: 1;
+    border-radius: 3px;
+    background: var(--border);
+    transition: background .3s;
+  }
+  .pip.done { background: var(--uber); }
+  .pip.active { background: var(--lyft); }
+  .pip-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+
+  .scenario-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .scenario-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .scenario-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .stags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .stag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--info-bg);
+    color: var(--info-text);
+    border: 1px solid var(--info-border);
+  }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .choice-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.5;
+    transition: background .12s, border-color .12s;
+  }
+  .choice-btn:hover { background: var(--bg); border-color: #bbb; }
+  .choice-btn.correct {
+    border: 2px solid var(--success-border);
+    background: var(--success-bg);
+    color: var(--success-text);
+  }
+  .choice-btn.wrong {
+    border: 2px solid var(--danger-border);
+    background: var(--danger-bg);
+    color: var(--danger-text);
+  }
+  .choice-btn.dim { opacity: .4; pointer-events: none; }
+
+  .feedback {
+    border-left: 3px solid var(--uber);
+    background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: .875rem 1rem;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 1rem;
+    display: none;
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .feedback.show { display: block; }
+  .fb-hit { font-weight: 500; color: var(--success-text); }
+  .fb-miss { font-weight: 500; color: var(--danger-text); }
+
+  /* ── RESULTS / DEBRIEF ── */
+  .grade-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .grade-letter {
+    font-family: 'DM Mono', monospace;
+    font-size: 48px;
+    font-weight: 500;
+    color: var(--uber);
+  }
+  .grade-score { font-size: 14px; color: var(--muted); }
+  .grade-msg { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+
+  .legal-alert {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+    font-size: 13px;
+    color: var(--danger-text);
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+  }
+
+  .final-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .fs-card {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: .875rem;
+    text-align: center;
+  }
+  .fs-n {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--uber);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .fs-l { font-size: 12px; color: var(--muted); }
+
+  .debrief-section { margin-bottom: 1.75rem; }
+  .debrief-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .concept-row {
+    display: flex;
+    gap: 12px;
+    padding: .75rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .c-icon {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .c-icon.hit { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+  .c-icon.miss { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+  .c-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .c-def { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .lo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .lo-card {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+  }
+  .lo-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .lo-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+  .dq-list { display: flex; flex-direction: column; gap: 8px; }
+  .dq-item {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: .75rem 1rem;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .dq-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--lyft);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    display: inline-block;
+    padding: .7rem 1.5rem;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    background: var(--uber);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-primary:hover { opacity: .88; }
+  .btn-primary:disabled { opacity: .35; cursor: default; }
+  .btn-primary.lyft { background: var(--lyft); }
+
+  .btn-secondary {
+    display: inline-block;
+    padding: .65rem 1.25rem;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background .12s;
+    display: none;
+  }
+  .btn-secondary.show { display: inline-block; }
+  .btn-secondary:hover { background: var(--bg); }
+
+  .btn-ghost {
+    display: inline-block;
+    padding: .6rem 1.25rem;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .btn-ghost:hover { background: var(--bg); }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ── INTRO ── -->
+<div class="screen active" id="screen-intro">
+  <p class="intro-eyebrow">Strategic Marketing Management &nbsp;·&nbsp; Chapter 11</p>
+  <h1 class="intro-title">Rideshare CEO:<br><span>Pricing Decisions Sim</span></h1>
+  <p class="intro-subtitle">The rideshare industry runs on pricing strategy — and has broken nearly every rule in the textbook doing it. Step in as CEO and make real pricing calls across 5 high-stakes scenarios. Every decision affects your market share, revenue, and legal exposure.</p>
+
+  <div class="intro-card">
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-n">5</span><span class="stat-l">Scenarios</span></div>
+      <div class="stat-box"><span class="stat-n">13</span><span class="stat-l">Concepts tested</span></div>
+      <div class="stat-box"><span class="stat-n">~8 min</span><span class="stat-l">Play time</span></div>
+    </div>
+    <div class="concept-header">Concepts covered</div>
+    <div class="concept-wrap">
+      <span class="ctag">Penetration pricing</span>
+      <span class="ctag">Price skimming</span>
+      <span class="ctag">Value pricing</span>
+      <span class="ctag">Competitor-based pricing</span>
+      <span class="ctag">Price war</span>
+      <span class="ctag">Stability pricing</span>
+      <span class="ctag">Price discrimination</span>
+      <span class="ctag">Predatory pricing</span>
+      <span class="ctag">JND</span>
+      <span class="ctag">Price elasticity</span>
+      <span class="ctag">Deceptive pricing</span>
+      <span class="ctag">Odd pricing</span>
+      <span class="ctag">Cost-plus pricing</span>
+    </div>
+  </div>
+
+  <p class="intro-note">After all 5 rounds you'll receive a full academic debrief — concept definitions, where you went right or wrong, and the Chapter 11 learning objectives addressed.</p>
+  <button class="btn-primary" onclick="goSetup()">Choose your company →</button>
+</div>
+
+<!-- ── SETUP ── -->
+<div class="screen" id="screen-setup">
+  <p class="setup-title">Choose your company</p>
+  <p class="setup-sub">Your team plays as one company for all 5 rounds. The AI controls the opponent. Same decisions, different perspective.</p>
+  <div class="role-grid">
+    <div class="role-card" id="pick-uber" onclick="pickRole('uber')">
+      <div class="role-logo uber">Uber</div>
+      <div class="role-desc">Market leader. Highest revenue exposure. History of aggressive — and legally questionable — pricing tactics.</div>
+    </div>
+    <div class="role-card" id="pick-lyft" onclick="pickRole('lyft')">
+      <div class="role-logo lyft">Lyft</div>
+      <div class="role-desc">Challenger brand. Reputation for transparency. Always reacting to Uber's moves while building share.</div>
+    </div>
+  </div>
+  <button class="btn-primary" id="start-btn" onclick="startGame()" disabled>Select a company to begin</button>
+  &nbsp;
+  <button class="btn-ghost" onclick="goIntro()">← Back</button>
+</div>
+
+<!-- ── GAME ── -->
+<div class="screen" id="screen-game">
+  <div class="progress-bar" id="progress-pips"></div>
+  <div class="scoreboard">
+    <div class="co-card uber">
+      <div class="co-name">Uber</div>
+      <div class="co-row"><span class="co-lbl">Market share</span><span class="co-val" id="uber-share">50%</span></div>
+      <div class="co-row"><span class="co-lbl">Revenue index</span><span class="co-val" id="uber-rev">100</span></div>
+      <div class="co-row"><span class="co-lbl">Legal risk</span><span class="co-val" id="uber-legal">Low</span></div>
+    </div>
+    <div class="co-card lyft">
+      <div class="co-name">Lyft</div>
+      <div class="co-row"><span class="co-lbl">Market share</span><span class="co-val" id="lyft-share">50%</span></div>
+      <div class="co-row"><span class="co-lbl">Revenue index</span><span class="co-val" id="lyft-rev">100</span></div>
+      <div class="co-row"><span class="co-lbl">Legal risk</span><span class="co-val" id="lyft-legal">Low</span></div>
+    </div>
+  </div>
+  <div class="scenario-box">
+    <div class="scenario-eyebrow">Round <span id="round-num">1</span> of 5 &nbsp;·&nbsp; Scenario</div>
+    <div class="scenario-text" id="scenario-text"></div>
+    <div class="stags" id="concept-tags"></div>
+  </div>
+  <div class="choices" id="choices"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="btn-secondary" id="next-btn" onclick="nextRound()">Next round →</button>
+</div>
+
+<!-- ── RESULTS ── -->
+<div class="screen" id="screen-results"></div>
+
+</div><!-- /container -->
+
+<script>
+const scenarios = [
+  {
+    text: "New Year's Eve. Demand spikes 8x. Your AI algorithm wants to raise prices 400%. Drivers love it. Riders are furious on social media. What do you do?",
+    concepts: ["Price elasticity of demand","Value pricing","Surge pricing"],
+    choices: [
+      { text: "Cap surge at 2x max — communicate the reason clearly to riders.", correct: true,
+        feedback: "Smart. Capping surge balances driver supply incentives with customer goodwill — this is value pricing in practice. Price must reflect the full bundle of benefits perceived by the customer, not just demand extraction. Uber adopted surge caps after major backlash and Congressional scrutiny.",
+        sD:[3,-3], rD:[8,-5], lD:[0,0] },
+      { text: "Let the algorithm run — full 400% surge. It's legal and maximizes revenue.", correct: false,
+        feedback: "Maximizes short-term revenue but destroys trust. High price elasticity means many riders switch to Lyft permanently. Uncapped surge pricing also invites price discrimination claims if the algorithm charges different customers different rates for identical trips.",
+        sD:[-6,6], rD:[15,-3], lD:[2,0] },
+      { text: "Freeze prices at normal rate — treat it as a PR win.", correct: false,
+        feedback: "Generous, but unsustainable. Drivers will go offline when fares don't reflect demand, creating supply shortage that drives rider churn anyway. This ignores target ROI logic — sacrificing margin with no strategic return.",
+        sD:[1,-1], rD:[-10,5], lD:[0,0] },
+      { text: "Match exactly whatever Lyft charges, in real time.", correct: false,
+        feedback: "Real-time price matching with a direct competitor can constitute tacit price-fixing — a per se antitrust violation. Even without explicit coordination, parallel pricing algorithms have drawn FTC investigation.",
+        sD:[0,0], rD:[3,3], lD:[4,4] }
+    ]
+  },
+  {
+    text: "Lyft just cut base fares 20% in 5 major cities, clearly targeting your market share. Your CFO wants to match immediately. Your CMO says hold and add value instead.",
+    concepts: ["Competitor-based pricing","Price war","Stability pricing"],
+    choices: [
+      { text: "Match the 20% cut in those 5 cities only.", correct: false,
+        feedback: "Selective matching is tactically defensible but risks triggering a full price war. If Lyft escalates, both companies destroy margins. Competitor-based pricing is useful context but dangerous as the sole pricing driver.",
+        sD:[1,-1], rD:[-5,-8], lD:[0,0] },
+      { text: "Hold price — launch a value campaign instead: better ETAs, safer drivers, reliability data.", correct: true,
+        feedback: "Excellent. Rather than competing on price alone, you're shifting to value pricing — communicating the full bundle of benefits. This protects margin and avoids a race to the bottom. It also reflects stability pricing logic: find a neutral price point that doesn't trigger competitive escalation.",
+        sD:[4,-4], rD:[5,-6], lD:[0,0] },
+      { text: "Undercut Lyft further — drop 30% and subsidize from investor capital.", correct: false,
+        feedback: "This is predatory pricing — intentionally pricing below cost to eliminate a competitor. Exactly what Uber was accused of in its early years and illegal under antitrust law. Financially catastrophic: investors demand returns, and the low price anchor is nearly impossible to raise.",
+        sD:[7,-7], rD:[-20,-10], lD:[5,0] },
+      { text: "Raise prices 10% — signal premium positioning over Lyft.", correct: false,
+        feedback: "Bold, but risky mid-competitive-attack. Prestige pricing works when brand equity is firmly established and demand is inelastic. In a commoditized rideshare market, raising prices while a competitor cuts almost always accelerates share loss.",
+        sD:[-5,5], rD:[3,8], lD:[0,0] }
+    ]
+  },
+  {
+    text: "Your data science team found that riders in high-income ZIP codes are less price-sensitive. They propose charging those riders 15–25% more for identical trips.",
+    concepts: ["Price discrimination","Deceptive pricing","Legal considerations"],
+    choices: [
+      { text: "Approve it — it's standard yield management, just like airlines.", correct: false,
+        feedback: "This conflates legal yield management (varying by time, service class) with unlawful price discrimination. Charging more based on perceived wealth rather than cost differences violates the Robinson-Patman Act. Uber has faced lawsuits for exactly this.",
+        sD:[2,-2], rD:[12,-3], lD:[5,0] },
+      { text: "Reject it — geographic pricing must reflect actual cost differences, not rider demographics.", correct: true,
+        feedback: "Correct. Price discrimination is legal only when it reflects substantive cost or competitive differences — not buyer characteristics. Basing price on inferred income rather than trip economics is the textbook definition of unlawful price discrimination.",
+        sD:[0,0], rD:[0,0], lD:[-2,0] },
+      { text: "Do it — but keep the pricing algorithm proprietary and unpublished.", correct: false,
+        feedback: "Lack of transparency doesn't provide legal protection — it creates additional exposure under deceptive pricing statutes. Knowingly presenting prices that give customers a false impression is a separate violation. And the algorithm will leak.",
+        sD:[1,-1], rD:[8,-2], lD:[6,0] },
+      { text: "Reframe as an opt-in premium tier: riders pay more for guaranteed faster pickups.", correct: false,
+        feedback: "Clever reframe — this is product line pricing, which is legal and transparent. However, if 'premium' is the default in wealthy areas, regulators may still interpret it as discriminatory. Intent and implementation both matter under the law.",
+        sD:[3,-2], rD:[7,-1], lD:[2,0] }
+    ]
+  },
+  {
+    text: "You're entering 3 new mid-size cities where a local competitor charges a flat $8 per ride. Your goal: 40% market share in year one.",
+    concepts: ["Penetration pricing","Price-quality positioning","Odd pricing"],
+    choices: [
+      { text: "Price at $6 flat — blitz the market and worry about margins later.", correct: false,
+        feedback: "Penetration pricing can work, but $6 vs. an $8 competitor risks predatory pricing classification if you're subsidizing below cost. It also creates a painful price anchor — customers accept decreases but react negatively to increases, making recovery very difficult.",
+        sD:[8,-2], rD:[-12,-5], lD:[3,0] },
+      { text: "Price at $7.99 with heavy promotional spending in launch weeks.", correct: true,
+        feedback: "Classic penetration pricing executed well. You undercut enough to attract trial, use high/low promotions to build awareness, and stay above a floor that still signals quality. The $7.99 also demonstrates odd pricing — psychological anchoring just below a round dollar amount.",
+        sD:[6,-3], rD:[-4,-3], lD:[0,0] },
+      { text: "Price at $10 — position as the premium, safer option.", correct: false,
+        feedback: "Price skimming works in niche markets with strong brand prestige. Entering a new market at 25% above a known local competitor makes a 40% share target nearly unachievable in year one.",
+        sD:[-3,0], rD:[8,2], lD:[0,0] },
+      { text: "Match at $8 and offer a free first ride for new users.", correct: false,
+        feedback: "A free first ride is a loss leader tactic — it generates trial but attracts price-sensitive switchers who churn after the promo. Matching at $8 also surrenders any price-based competitive advantage.",
+        sD:[3,-1], rD:[-6,-1], lD:[0,0] }
+    ]
+  },
+  {
+    text: "Driver wages and fuel costs increased your cost per ride by 18%. You need to raise fares. How do you execute the increase?",
+    concepts: ["Just noticeable difference (JND)","Execute price changes","Cost-plus pricing"],
+    choices: [
+      { text: "Raise prices 18% immediately — be fully transparent about the cost drivers.", correct: false,
+        feedback: "Transparency is good, but a single 18% hike almost certainly exceeds the JND threshold — the amount of increase that can be absorbed without triggering noticeable demand loss. Staged increases work better.",
+        sD:[-5,5], rD:[8,6], lD:[0,0] },
+      { text: "Raise prices in two 9% increments over 6 months, with minimal announcement.", correct: true,
+        feedback: "JND in action. Keeping each individual increase below what customers consciously register reduces elasticity-driven churn. Snickers is the classic textbook example — rather than one large price increase, they've shrunk package size gradually over decades.",
+        sD:[-1,0], rD:[14,3], lD:[0,0] },
+      { text: "Keep rider prices flat — cut driver pay to absorb the cost increase.", correct: false,
+        feedback: "This protects rider prices but creates a driver supply crisis. Drivers go offline, creating longer wait times that drive rider churn anyway. Cost-plus logic: sustained cost increases must eventually be reflected in price.",
+        sD:[2,-1], rD:[-5,4], lD:[1,0] },
+      { text: "Keep base fare flat but add a visible $1.50 fuel surcharge line item.", correct: false,
+        feedback: "Riders respond more negatively to visible surcharges than to equivalent base fare increases — the surcharge feels like a punishment. It also risks deceptive pricing exposure if the surcharge doesn't directly reflect actual fuel costs.",
+        sD:[-2,1], rD:[10,2], lD:[2,0] }
+    ]
+  }
+];
+
+const conceptDefs = {
+  "Price elasticity of demand": "The measure of customers' price sensitivity — dividing the relative change in quantity sold by the relative change in price. Highly elastic demand means customers switch when price rises.",
+  "Value pricing": "A strategy in which price reflects the entire bundle of benefits sought by the customer — product quality, service, image, and innovation — not just production cost.",
+  "Surge pricing": "A real-world application of dynamic pricing and elasticity where prices rise automatically with demand. Legal when disclosed, but legally complex when applied differently across customer segments.",
+  "Competitor-based pricing": "Setting price relative to competitors — at, above, or below market average — based on analysis of competitor pricing patterns.",
+  "Price war": "Occurs when a firm deliberately undercuts rivals to gain share, typically resulting in margin destruction for all parties involved.",
+  "Stability pricing": "A neutral price point — neither low enough to provoke a price war nor high enough to undermine the value proposition.",
+  "Price discrimination": "Charging different customers different prices without a substantive cost-based or competitive justification. Regulated under the Robinson-Patman Act.",
+  "Deceptive pricing": "Knowingly stating prices in a manner that creates a false impression. Includes inflated reference prices, bait-and-switch schemes, and hidden fees.",
+  "Predatory pricing": "Intentionally pricing below cost to push a competitor out of the market, then raising prices. Illegal under antitrust law.",
+  "Penetration pricing": "Setting a low initial price to gain maximum market share. Can create a barrier to entry but risks anchoring a price that is difficult to raise later.",
+  "Price-quality positioning": "The relationship between price and perceived quality. Illustrated in the price-quality positioning map (Exhibit 11.3) across four quadrants.",
+  "Odd pricing": "Pricing not expressed in whole dollars (e.g., $7.99 vs. $8.00). Creates a psychological perception that the price is meaningfully lower.",
+  "Just noticeable difference (JND)": "The amount of price increase that can be taken without materially impacting customer demand — used to stage gradual increases below the threshold of conscious awareness.",
+  "Execute price changes": "Implementing price increases or decreases in ways that minimize negative customer response — including staged increases and JND management.",
+  "Cost-plus pricing": "Building a price by adding a standard markup to all costs associated with the offering."
+};
+
+let playerRole = null, currentRound = 0, answered = false;
+let state = { uber:{share:50,rev:100,legal:0}, lyft:{share:50,rev:100,legal:0} };
+let roundLog = [];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function legalLabel(n) {
+  if (n<=0) return 'Low'; if (n<=3) return 'Moderate'; if (n<=6) return 'High'; return 'Critical';
+}
+function updateBoard() {
+  document.getElementById('uber-share').textContent = Math.max(0,Math.min(100,state.uber.share)).toFixed(0)+'%';
+  document.getElementById('lyft-share').textContent = Math.max(0,Math.min(100,state.lyft.share)).toFixed(0)+'%';
+  document.getElementById('uber-rev').textContent = Math.max(0,state.uber.rev).toFixed(0);
+  document.getElementById('lyft-rev').textContent = Math.max(0,state.lyft.rev).toFixed(0);
+  document.getElementById('uber-legal').textContent = legalLabel(state.uber.legal);
+  document.getElementById('lyft-legal').textContent = legalLabel(state.lyft.legal);
+}
+function goIntro() { show('screen-intro'); }
+function goSetup() { show('screen-setup'); }
+function pickRole(r) {
+  playerRole = r;
+  document.getElementById('pick-uber').className = 'role-card' + (r==='uber'?' picked-uber':'');
+  document.getElementById('pick-lyft').className = 'role-card' + (r==='lyft'?' picked-lyft':'');
+  const btn = document.getElementById('start-btn');
+  btn.disabled = false;
+  btn.textContent = 'Start as ' + (r==='uber'?'Uber CEO':'Lyft CEO');
+  btn.className = 'btn-primary' + (r==='lyft'?' lyft':'');
+}
+function startGame() {
+  currentRound=0; roundLog=[];
+  state = { uber:{share:50,rev:100,legal:0}, lyft:{share:50,rev:100,legal:0} };
+  show('screen-game'); loadRound();
+}
+function loadRound() {
+  answered = false;
+  const s = scenarios[currentRound];
+  document.getElementById('round-num').textContent = currentRound+1;
+  const pips = document.getElementById('progress-pips');
+  pips.innerHTML = '';
+  for (let i=0;i<5;i++) {
+    const p = document.createElement('div');
+    p.className = 'pip' + (i<currentRound?' done':i===currentRound?' active':'');
+    pips.appendChild(p);
+  }
+  const lbl = document.createElement('span');
+  lbl.className = 'pip-label';
+  lbl.textContent = 'Round '+(currentRound+1)+' of 5';
+  pips.appendChild(lbl);
+  document.getElementById('scenario-text').textContent = s.text;
+  document.getElementById('concept-tags').innerHTML = s.concepts.map(c=>`<span class="stag">${c}</span>`).join('');
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  s.choices.forEach((c,i) => {
+    const b = document.createElement('button');
+    b.className = 'choice-btn'; b.textContent = c.text;
+    b.onclick = () => selectChoice(i); ch.appendChild(b);
+  });
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('next-btn').className = 'btn-secondary';
+  updateBoard();
+}
+function selectChoice(idx) {
+  if (answered) return; answered = true;
+  const s = scenarios[currentRound]; const c = s.choices[idx];
+  document.querySelectorAll('.choice-btn').forEach((b,i) => {
+    if (i===idx) b.className = 'choice-btn '+(c.correct?'correct':'wrong');
+    else if (s.choices[i].correct) b.className = 'choice-btn correct';
+    else b.classList.add('dim');
+  });
+  state.uber.share = Math.max(5,Math.min(95,state.uber.share+c.sD[0]));
+  state.lyft.share = 100-state.uber.share;
+  state.uber.rev = Math.max(0,state.uber.rev+c.rD[0]);
+  state.lyft.rev = Math.max(0,state.lyft.rev+c.rD[1]);
+  state.uber.legal = Math.max(0,state.uber.legal+c.lD[0]);
+  state.lyft.legal = Math.max(0,state.lyft.legal+c.lD[1]);
+  roundLog.push({round:currentRound+1, correct:c.correct, concepts:s.concepts});
+  const fb = document.getElementById('feedback');
+  const tag = c.correct ? '<span class="fb-hit">Good call.</span> ' : '<span class="fb-miss">Costly mistake.</span> ';
+  fb.innerHTML = tag + c.feedback; fb.className = 'feedback show';
+  const nb = document.getElementById('next-btn');
+  nb.className = 'btn-secondary show';
+  nb.textContent = currentRound<4 ? 'Next round →' : 'See debrief →';
+  updateBoard();
+}
+function nextRound() { currentRound++; if (currentRound>=5) showDebrief(); else loadRound(); }
+
+function showDebrief() {
+  const correct = roundLog.filter(r=>r.correct).length;
+  const legal = state[playerRole].legal;
+  let grade, msg;
+  if (correct>=4&&legal<=2) { grade='A'; msg='Sharp strategic instincts. You balanced revenue, market share, and legal exposure like a seasoned marketing executive.'; }
+  else if (correct>=3&&legal<=4) { grade='B'; msg='Solid performance. A few decisions left margin on the table or created legal exposure worth revisiting in the debrief.'; }
+  else if (correct>=2) { grade='C'; msg='Mixed results. Several key concepts tripped you up — the debrief below maps directly back to the chapter sections most worth reviewing.'; }
+  else { grade='D'; msg='Rough quarter. The debrief below identifies the specific Ch. 11 concepts behind each missed decision.'; }
+
+  const allC=[], missedC=[];
+  roundLog.forEach(r=>r.concepts.forEach(c=>{ if(!allC.includes(c)) allC.push(c); }));
+  roundLog.filter(r=>!r.correct).forEach(r=>r.concepts.forEach(c=>{ if(!missedC.includes(c)) missedC.push(c); }));
+
+  const lWarn = legal>=5 ? `<div class="legal-alert">Legal exposure reached critical level — the FTC has opened a pricing practices inquiry. Review price discrimination, predatory pricing, and deceptive pricing in Ch. 11, Section VII.</div>` : '';
+
+  const cRows = allC.map(c => {
+    const hit = !missedC.includes(c);
+    const def = conceptDefs[c] || '';
+    return `<div class="concept-row">
+      <div class="c-icon ${hit?'hit':'miss'}">${hit?'✓':'✗'}</div>
+      <div><div class="c-name">${c}</div><div class="c-def">${def}</div></div>
+    </div>`;
+  }).join('');
+
+  const los = [
+    {num:'LO 11-2',text:'Explore pricing objectives and related strategies'},
+    {num:'LO 11-3',text:'Identify pricing tactics'},
+    {num:'LO 11-4',text:'Describe approaches to setting the exact price'},
+    {num:'LO 11-6',text:'Understand how to execute price changes'},
+    {num:'LO 11-7',text:'Examine legal considerations in pricing'}
+  ];
+
+  const dqs = [
+    "What is the legal distinction between surge pricing and price discrimination? What conditions make each legal or illegal?",
+    "In Round 2, why is value pricing a stronger long-term response to a competitor's price cut than matching or undercutting?",
+    "The JND concept comes from psychology. How does a marketer use it ethically to manage cost-driven price increases?",
+    "Where on the price-quality positioning map (Exhibit 11.3) does Uber sit today? Has that position shifted since its founding?"
+  ];
+
+  document.getElementById('screen-results').innerHTML = `
+    <div class="grade-row">
+      <span class="grade-letter">${grade}</span>
+      <span class="grade-score">${correct}/5 correct decisions &nbsp;·&nbsp; Playing as ${playerRole==='uber'?'Uber':'Lyft'}</span>
+    </div>
+    <p class="grade-msg">${msg}</p>
+    ${lWarn}
+    <div class="final-stats">
+      <div class="fs-card"><span class="fs-n">${Math.max(0,Math.min(100,state[playerRole].share)).toFixed(0)}%</span><span class="fs-l">Your market share</span></div>
+      <div class="fs-card"><span class="fs-n">${Math.max(0,state[playerRole].rev).toFixed(0)}</span><span class="fs-l">Revenue index</span></div>
+      <div class="fs-card"><span class="fs-n">${legalLabel(state[playerRole].legal)}</span><span class="fs-l">Legal risk</span></div>
+    </div>
+    <hr class="divider">
+    <div class="debrief-section">
+      <div class="debrief-label">Concept review — this session</div>
+      ${cRows}
+    </div>
+    <div class="debrief-section">
+      <div class="debrief-label">Chapter 11 learning objectives addressed</div>
+      <div class="lo-grid">${los.map(l=>`<div class="lo-card"><div class="lo-num">${l.num}</div><div class="lo-text">${l.text}</div></div>`).join('')}</div>
+    </div>
+    <div class="debrief-section">
+      <div class="debrief-label">Discussion questions</div>
+      <div class="dq-list">${dqs.map((q,i)=>`<div class="dq-item"><span class="dq-num">Q${i+1}</span>${q}</div>`).join('')}</div>
+    </div>
+    <hr class="divider">
+    <button class="btn-ghost" onclick="replayGame()">← Play again (switch sides)</button>
+  `;
+  show('screen-results');
+}
+
+function replayGame() {
+  playerRole = null;
+  document.getElementById('pick-uber').className = 'role-card';
+  document.getElementById('pick-lyft').className = 'role-card';
+  const btn = document.getElementById('start-btn');
+  btn.disabled = true; btn.textContent = 'Select a company to begin'; btn.className = 'btn-primary';
+  show('screen-intro');
+}
+</script>
+</body>
+</html>
